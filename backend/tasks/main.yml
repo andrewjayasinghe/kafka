@@ -1,0 +1,79 @@
+---
+# tasks file for backend
+- name: Install Software
+  become: true
+  ansible.builtin.package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - "@nodejs:14"
+    - git
+  tags:
+      - application
+- name: Creating the backend user
+  become: true
+  ansible.builtin.user:
+    name: "{{ backend_user }}"
+  tags:
+      - application
+
+- name: Creating the backend folder
+  become: true
+  ansible.builtin.file:
+    path: "{{ backend_path }}"
+    state: directory
+    mode: '0755'
+    owner: "{{ backend_user }}"
+  tags:
+      - application
+
+- name: Pulling code from Repo
+  become: true
+  become_user: "{{ backend_user }}"
+  ansible.builtin.git:
+    repo: 'https://github.com/bezkoder/nodejs-express-sequelize-mysql.git'
+    dest: "{{ backend_path }}"
+    force: yes
+  tags:
+      - application
+
+- name: Copying db.config.js file
+  become: true
+  ansible.builtin.template:
+    src: db.config.js
+    dest: "{{ backend_path }}/app/config/db.config.js"
+  tags:
+      - application
+
+- name: Copying tutorials.service file
+  become: true
+  ansible.builtin.template:
+    src: tutorials.service
+    dest: "/etc/systemd/system/tutorials.service"
+  tags:
+      - application
+
+- name: Installing dependencies
+  become: true
+  become_user: "{{ backend_user }}"
+  community.general.npm:
+    path: "{{ backend_path }}"
+  tags:
+      - application
+
+- name: Enabling and starting service
+  become: true
+  ansible.builtin.systemd:
+    state: started
+    name: tutorials.service
+  tags:
+      - application
+
+- name: Firewall setup
+  become: true
+  ansible.builtin.shell: "{{ item }}"
+  with_items:
+    - firewall-cmd --add-port=8080/tcp
+    - firewall-cmd --runtime-to-permanent
+  tags:
+      - application

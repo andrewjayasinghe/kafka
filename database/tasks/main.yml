@@ -1,0 +1,41 @@
+---
+# tasks file for database
+- name: Installing MYSQL
+  become: true
+  package:
+    name: mysql-server
+    state: present
+  register: mysql_init_setup
+  tags:
+      - application
+
+- name: Copying sql file
+  become: true
+  ansible.builtin.template:
+    src: db_init.sql
+    dest: /home/centos/db_init.sql
+  tags:
+      - application
+
+- name: Enabling service
+  become: true
+  ansible.builtin.systemd:
+    state: started
+    name: mysqld
+  tags:
+      - application
+
+- name: Running MySQL Script
+  ansible.builtin.shell: sudo mysql -u root < /home/centos/db_init.sql
+  when: mysql_init_setup.changed
+  tags:
+      - application
+
+- name: Firewall setup
+  become: true
+  ansible.builtin.shell: "{{ item }}"
+  with_items:
+    - firewall-cmd --add-port=3306/tcp
+    - firewall-cmd --runtime-to-permanent
+  tags:
+      - application

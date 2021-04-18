@@ -1,0 +1,5 @@
+---
+# defaults file for frontend
+frontend_path: /frontend
+frontend_user: frontend
+api_location: /api

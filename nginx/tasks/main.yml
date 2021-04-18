@@ -1,0 +1,53 @@
+---
+# tasks file for nginx
+- name: Disable SELinux
+  become: true
+  ansible.posix.selinux:
+    state: disabled
+  tags:
+      - application
+- name: Install NGINX
+  become: true
+  package:
+    name: nginx
+    state: present
+  tags:
+      - application
+- name: Moving nginx configuration file
+  become: true
+  template:
+    src: nginx.conf
+    dest: /etc/nginx/nginx.conf
+  register: nginx_config
+  tags:
+      - application
+- name: Restart nginx if required
+  become: true
+  systemd:
+    name: nginx
+    state: restarted
+  when: nginx_config.changed
+  tags:
+      - application
+- name: Nginx has been started and enabled
+  become: true
+  systemd:
+    name: nginx
+    state: started
+  tags:
+      - application
+- name: firewall has been started and enabled
+  become: true
+  systemd:
+    name: firewalld
+    state: started
+  tags:
+      - application
+- name: Firewall setup
+  become: true
+  ansible.builtin.shell: "{{ item }}"
+  with_items:
+    - firewall-cmd --add-port=80/tcp
+    - firewall-cmd --runtime-to-permanent
+  tags:
+      - application
