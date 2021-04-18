@@ -1,3 +1,0 @@
----
-# vars file for nginx
-http_static_dir: /frontend

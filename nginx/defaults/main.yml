@@ -1,5 +1,0 @@
----
-# defaults file for nginx
-http_static_dir: /frontend
-api_location: /api
-backend_url: http://backend:8080
